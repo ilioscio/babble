@@ -27,7 +27,8 @@
             runHook preBuild
             export ZIG_GLOBAL_CACHE_DIR=$(mktemp -d)
             export ZIG_LOCAL_CACHE_DIR=$(mktemp -d)
-            zig build --release=safe -Doptimize=ReleaseSafe --prefix $out
+            # Build for baseline x86_64 (no CPU-specific instructions)
+            zig build --release=safe -Doptimize=ReleaseSafe -Dcpu=baseline --prefix $out
 
             # Bundle the default corpus
             mkdir -p $out/share/babble
