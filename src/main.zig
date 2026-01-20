@@ -32,7 +32,7 @@ const HTML_PREFIX =
     \\    </header>
     \\    <main class="container">
     \\      <article>
-    \\        <h1>Babble</h1>
+    \\        <h1>Truth</h1>
     \\        <p>
 ;
 
