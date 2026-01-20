@@ -4,7 +4,51 @@ const LISTEN_PORT: u16 = 8080;
 const LISTEN_ADDR = "127.0.0.1";
 const MAX_OUTPUT_WORDS: usize = 2000; // Security limit
 
-const HTTP_HEADER = "HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\n";
+const HTTP_HEADER = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n";
+
+// HTML template matching ilios.dev website style
+const HTML_PREFIX =
+    \\<!DOCTYPE html>
+    \\<html lang="en" data-theme="dark">
+    \\<head>
+    \\    <meta charset="UTF-8">
+    \\    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    \\    <link rel="icon" type="image/x-icon" href="/favicon.png">
+    \\    <title>Babble</title>
+    \\    <meta name="color-scheme" content="light dark">
+    \\    <link rel="stylesheet" href="/ilioCSS.min.css">
+    \\    <link rel="stylesheet" href="/style.css">
+    \\</head>
+    \\<body>
+    \\    <header class="container">
+    \\      <nav>
+    \\          <a href="/index.html"><img src="/logo.svg" class="logo" alt="Logo"></a>
+    \\        <ul>
+    \\          <li>
+    \\            <a href="/posts.html"><button>Posts</button></a>
+    \\          </li>
+    \\        </ul>
+    \\      </nav>
+    \\    </header>
+    \\    <main class="container">
+    \\      <article>
+    \\        <h1>Babble</h1>
+    \\        <p>
+;
+
+const HTML_SUFFIX =
+    \\        </p>
+    \\      </article>
+    \\    </main>
+    \\    <footer class="container">
+    \\         <nav>
+    \\           <p>© 2026 <span><a href="/about.html" data-tooltip="That's me!">ilios</a></span></p>
+    \\           <span><span class="love" data-tooltip="Only pure HTML/CSS">Made</span> <span class="love" data-placement="left" data-tooltip="No Javascript">with</span> <span class="love" data-placement="left" data-tooltip="No tracking"><img src="/heart.svg" class="icon" alt="Love"></span></span>
+    \\         </nav>
+    \\    </footer>
+    \\</body>
+    \\</html>
+;
 
 // Bigram key for the Markov model
 const WordPair = struct {
@@ -76,6 +120,7 @@ pub fn main() !void {
         std.hash_map.default_max_load_percentage,
     ).init(allocator);
     defer {
+        // Free all inner ArrayLists first, then the HashMap
         var it = possibles.valueIterator();
         while (it.next()) |value_ptr| {
             value_ptr.deinit(allocator);
@@ -122,7 +167,7 @@ pub fn main() !void {
         const conn = try server.accept();
         defer conn.stream.close();
 
-        // Drain incoming HTTP request (read until end of headers)
+        // Drain incoming HTTP request
         var request_buf: [4096]u8 = undefined;
         _ = conn.stream.read(&request_buf) catch {};
 
@@ -155,7 +200,10 @@ pub fn main() !void {
             }
         }
 
+        // Send full HTML page with site styling
         try conn.stream.writeAll(HTTP_HEADER);
+        try conn.stream.writeAll(HTML_PREFIX);
         try conn.stream.writeAll(output.items);
+        try conn.stream.writeAll(HTML_SUFFIX);
     }
 }
